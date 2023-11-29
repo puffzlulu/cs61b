@@ -1,0 +1,158 @@
+package lab9;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
+/**
+ *  A hash table-backed Map implementation. Provides amortized constant time
+ *  access to elements via get(), remove(), and put() in the best case.
+ *
+ *  @author Your name here
+ */
+public class MyHashMap<K, V> implements Map61B<K, V> {
+
+    private static final int DEFAULT_SIZE = 16;
+    private static final double MAX_LF = 0.75;
+
+    private ArrayMap<K, V>[] buckets;
+    private int size;
+
+    private int loadFactor() {
+        return size / buckets.length;
+    }
+
+    public MyHashMap() {
+        buckets = new ArrayMap[DEFAULT_SIZE];
+        this.clear();
+    }
+
+    /* Removes all of the mappings from this map. */
+    @Override
+    public void clear() {
+        this.size = 0;
+        for (int i = 0; i < this.buckets.length; i += 1) {
+            this.buckets[i] = new ArrayMap<>();
+        }
+    }
+
+    /** Computes the hash function of the given key. Consists of
+     *  computing the hashcode, followed by modding by the number of buckets.
+     *  To handle negative numbers properly, uses floorMod instead of %.
+     */
+    private int hash(K key) {
+        if (key == null) {
+            return 0;
+        }
+
+        int numBuckets = buckets.length;
+        return Math.floorMod(key.hashCode(), numBuckets);
+    }
+
+    /* Returns the value to which the specified key is mapped, or null if this
+     * map contains no mapping for the key.
+     */
+    @Override
+    public V get(K key) {
+        //throw new UnsupportedOperationException();
+        int index=hash(key)% buckets.length;
+        return buckets[index].get(key);
+    }
+
+    /* Associates the specified value with the specified key in this map. */
+    @Override
+    public void put(K key, V value) {
+        //throw new UnsupportedOperationException();
+        int index=hash(key)% buckets.length;
+        if(!buckets[index].containsKey(key)){
+            size+=1;
+        }
+        buckets[index].put(key,value);
+    }
+
+    /* Returns the number of key-value mappings in this map. */
+    @Override
+    public int size() {
+        //throw new UnsupportedOperationException();
+        return size;
+    }
+
+    //////////////// EVERYTHING BELOW THIS LINE IS OPTIONAL ////////////////
+
+    /* Returns a Set view of the keys contained in this map. */
+    @Override
+    public Set<K> keySet() {
+        Set<K> keyS=new HashSet<>();
+        for(int i=0;i< buckets.length;i++){
+            if(buckets[i].size()!=0){
+                keyS.addAll(buckets[i].keySet());
+            }
+        }
+        return keyS;
+        //throw new UnsupportedOperationException();
+    }
+
+    /* Removes the mapping for the specified key from this map if exists.
+     * Not required for this lab. If you don't implement this, throw an
+     * UnsupportedOperationException. */
+    @Override
+    public V remove(K key) {
+        for(int i=0;i< buckets.length;i++){
+            if(buckets[i].size()!=0){
+                if(buckets[i].containsKey(key)){
+                    return buckets[i].remove(key);
+                }
+            }
+        }
+        return null;
+        //throw new UnsupportedOperationException();
+    }
+
+    /* Removes the entry for the specified key only if it is currently mapped to
+     * the specified value. Not required for this lab. If you don't implement this,
+     * throw an UnsupportedOperationException.*/
+    @Override
+    public V remove(K key, V value) {
+        for(int i=0;i< buckets.length;i++){
+            if(buckets[i].size()!=0){
+                if(buckets[i].containsKey(key)){
+                    return buckets[i].remove(key,value);
+                }
+            }
+        }
+        return null;
+        //throw new UnsupportedOperationException();
+    }
+
+    private class myIterator implements Iterator<K>{
+        K[] key;
+        V[] values;
+        int flag=0;
+        myIterator(){
+            int num=0,lastNum=0;
+            for(int i=0;i< buckets.length;i++){
+                if(buckets[i].size!=0){
+                    System.arraycopy(key,num,buckets[i].keySet().toArray(),0,buckets[i].size());
+                    num+=buckets[i].size();
+                    for(int j=lastNum;j<num;j++){
+                        values[j]=buckets[i].get(key[j]);
+                    }
+                    lastNum=num;
+                }
+            }
+        }
+
+        public boolean hasNext(){
+            return flag< key.length;
+        }
+
+        public K next(){
+            return key[flag++];
+        }
+    }
+    @Override
+    public Iterator<K> iterator() {
+        return new myIterator();
+        //throw new UnsupportedOperationException();
+    }
+}
